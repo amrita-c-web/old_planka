@@ -1,7 +1,7 @@
-Feature: dashboard
+Feature: project board
     As a admin
-    I want to create a project
-    So that I can manage project
+    I want to change project elements
+    So that I organize project board 
 
     Background: 
         Given the following users has been created:
@@ -9,7 +9,6 @@ Feature: dashboard
             | user10 | test     | test@test.test | true    |
         And the user has logged in with email "test@test.test" and password "test"
 
-    
     Scenario: delete a project
         Given user "user10" has created the following projects:
             | name     |
