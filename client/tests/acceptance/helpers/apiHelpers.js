@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { testUsers, testProject } = require('./globals');
+const { testUsers, testProjects } = require('./globals');
 const { client } = require('nightwatch-api');
 
 const baseUrl = process.env.API_SERVER_URL || 'http://localhost:1337/api';
@@ -83,7 +83,7 @@ async function createProject(user, projectName) {
       id,
       name,
     };
-    testProject.push(projectInfo);
+    testProjects.push(projectInfo);
   } catch (error) {
     return false;
   }
@@ -102,12 +102,12 @@ async function deleteTestUsers() {
 
 async function deleteTestProjects() {
   await setAuthHeader();
-  for (const project of testProject) {
+  for (const project of testProjects) {
     try {
       await fetch.delete('/projects/' + project.id);
     } catch (error) {}
   }
-  testProject.length = 0;
+  testProjects.length = 0;
 }
 
 module.exports = {

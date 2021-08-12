@@ -4,5 +4,5 @@ module.exports = {
     email: 'demo@demo.demo',
     password: 'demo',
   },
-  testProject: [],
+  testProjects: [],
 };

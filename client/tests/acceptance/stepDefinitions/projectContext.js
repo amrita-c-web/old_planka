@@ -17,6 +17,36 @@ Given(
   }
 );
 
+Given(
+  'the user has created a project board {string} using the webUI',
+  async function (boardName) {
+    await projectPage.createProjectBoard(boardName);
+    const isProjectBoardExists = await projectPage.isProjectBoardExists(
+      boardName
+    );
+    assert.strictEqual(
+      isProjectBoardExists,
+      true,
+      'Expected project board to be created but is not'
+    );
+  }
+);
+
+Given(
+  'the user has added a board column {string} using the webUI',
+  async function (boardColumnName) {
+    await projectPage.addBoardList(boardColumnName);
+    const isBoardColumnExist = await projectPage.isBoardListExist(
+      boardColumnName
+    );
+    assert.strictEqual(
+      isBoardColumnExist,
+      true,
+      `Expected to board list to be ${isBoardColumnExist} but was not`
+    );
+  }
+);
+
 When(
   'the user deletes a project {string} using the webUI',
   function (projectName) {
@@ -25,15 +55,18 @@ When(
 );
 
 When(
-  'the user renames the project to {string} using the webUI',
-  function (projectName) {
-    return projectPage.renameProject(projectName);
+  'the user renames the project {string} to {string} using the webUI',
+  function (oldProjectName, newProjectName) {
+    return projectPage.renameProject(oldProjectName, newProjectName);
   }
 );
 
-When('the user changes background to purple using the webUI', function () {
-  return projectPage.changeProjectBg();
-});
+When(
+  'the user changes background of project {string} to purple using the webUI',
+  function (projectName) {
+    return projectPage.changeProjectBg(projectName);
+  }
+);
 
 When(
   'the user creates a new project board {string} using the webUI',
@@ -42,17 +75,36 @@ When(
   }
 );
 
+When(
+  'the user add a board column {string} using the webUI',
+  function (boardColumnName) {
+    return projectPage.addBoardList(boardColumnName);
+  }
+);
+When('the user add the following columns:', async function (dataTable) {
+  const boardColumns = dataTable.hashes();
+  let columns = 0;
+  for (const boardColumn of boardColumns) {
+    columns++;
+    await projectPage.addBoardList(Object.values(boardColumn), columns);
+  }
+});
+
+When(
+  'the user add a card {string} in a column {string} using the webUI',
+  function (cardName, boardColumnName) {
+    return projectPage.addCard(cardName, boardColumnName);
+  }
+);
+
 Then(
   'the project title should be renamed to {string}',
   async function (newProjectName) {
-    let actualTitle = '';
-    await projectPage.getText('@projectHeader', (result) => {
-      actualTitle = result.value;
-    });
+    const isProjectRename = await projectPage.isProjectOpen(newProjectName);
     assert.strictEqual(
-      actualTitle,
-      newProjectName,
-      `Expected to project title to be ${newProjectName} but was ${actualTitle}`
+      isProjectRename,
+      true,
+      `Expected to project title to be ${newProjectName} but was not`
     );
   }
 );
@@ -60,14 +112,11 @@ Then(
 Then(
   'the created project {string} should be opened',
   async function (projectName) {
-    let actualTitle = '';
-    await projectPage.getText('@projectHeader', (result) => {
-      actualTitle = result.value;
-    });
+    const isProjectOpen = await projectPage.isProjectOpen(projectName);
     assert.strictEqual(
-      actualTitle,
-      projectName,
-      `Expected to open project ${projectName} but was ${actualTitle}`
+      isProjectOpen,
+      true,
+      `Expected project "${projectName}" to be opened but not found`
     );
   }
 );
@@ -89,5 +138,28 @@ Then('the project board {string} should exist', async function (boardName) {
     isProjectBoardExists,
     true,
     'Expected project board to be created but does not'
+  );
+});
+
+Then(
+  'the board column {string} should exist',
+  async function (boardColumnName) {
+    const isBoardColumnExist = await projectPage.isBoardListExist(
+      boardColumnName
+    );
+    assert.strictEqual(
+      isBoardColumnExist,
+      true,
+      `Expected to board list to be ${boardColumnName} but was not`
+    );
+  }
+);
+
+Then('the card {string} should exist', async function (cardName) {
+  const isCardExist = await projectPage.isCardExist(cardName);
+  assert.strictEqual(
+    isCardExist,
+    true,
+    `Expected to card to be "${cardName}" but is not`
   );
 });
