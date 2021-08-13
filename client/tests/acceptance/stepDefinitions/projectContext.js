@@ -35,8 +35,9 @@ Given(
 Given(
   'the user has added a board column {string} using the webUI',
   async function (boardColumnName) {
-    await projectPage.addBoardList(boardColumnName);
-    const isBoardColumnExist = await projectPage.isBoardListExist(
+    let columnNumber = 1;
+    await projectPage.addBoardColumn(boardColumnName, columnNumber);
+    const isBoardColumnExist = await projectPage.isBoardColumnExist(
       boardColumnName
     );
     assert.strictEqual(
@@ -46,6 +47,24 @@ Given(
     );
   }
 );
+
+Given('the user has added the following columns:', async function (dataTable) {
+  const boardColumns = dataTable.hashes();
+  const expectedColumns = [];
+  let count = 0;
+  for (const { name } of boardColumns) {
+    const isFisrtColumn = count === 0;
+    await projectPage.addBoardColumn(name, isFisrtColumn);
+    expectedColumns.push(name);
+    count++;
+  }
+  // const actualColumns = await projectPage.getBoardColumns();
+  // assert.deepEqual(
+  //   actualColumns,
+  //   expectedColumns,
+  //   `Expected to board lists to be present but was not found`
+  // );
+});
 
 When(
   'the user deletes a project {string} using the webUI',
@@ -78,7 +97,8 @@ When(
 When(
   'the user add a board column {string} using the webUI',
   function (boardColumnName) {
-    return projectPage.addBoardList(boardColumnName);
+    let column = 1;
+    return projectPage.addBoardColumn(boardColumnName, column);
   }
 );
 When('the user add the following columns:', async function (dataTable) {
@@ -86,14 +106,31 @@ When('the user add the following columns:', async function (dataTable) {
   let columns = 0;
   for (const boardColumn of boardColumns) {
     columns++;
-    await projectPage.addBoardList(Object.values(boardColumn), columns);
+    await projectPage.addBoardColumn(Object.values(boardColumn), columns);
   }
 });
 
 When(
-  'the user add a card {string} in a column {string} using the webUI',
+  'the user adds a card {string} in a column {string} using the webUI',
   function (cardName, boardColumnName) {
-    return projectPage.addCard(cardName, boardColumnName);
+    let cardNumber = 1;
+    return projectPage.addCard(cardName, cardNumber, boardColumnName);
+  }
+);
+
+When(
+  'the user add the following cards in column {string}:',
+  async function (boardColumnName, dataTable) {
+    const columnCards = dataTable.hashes();
+    let cardNumber = 0;
+    for (const columnCard of columnCards) {
+      cardNumber++;
+      await projectPage.addCard(
+        Object.values(columnCard),
+        cardNumber,
+        boardColumnName
+      );
+    }
   }
 );
 
@@ -144,7 +181,7 @@ Then('the project board {string} should exist', async function (boardName) {
 Then(
   'the board column {string} should exist',
   async function (boardColumnName) {
-    const isBoardColumnExist = await projectPage.isBoardListExist(
+    const isBoardColumnExist = await projectPage.isBoardColumnExist(
       boardColumnName
     );
     assert.strictEqual(
@@ -154,12 +191,46 @@ Then(
     );
   }
 );
-
-Then('the card {string} should exist', async function (cardName) {
-  const isCardExist = await projectPage.isCardExist(cardName);
-  assert.strictEqual(
-    isCardExist,
-    true,
-    `Expected to card to be "${cardName}" but is not`
-  );
+Then('the following board columns shold exist:', async function (dataTable) {
+  const boardColumns = dataTable.hashes();
+  for (const boardColumn of boardColumns) {
+    const isBoardColumnExist = await projectPage.isBoardColumnExist(
+      boardColumn.name
+    );
+    assert.strictEqual(
+      isBoardColumnExist,
+      true,
+      `Expected to board list to be ${boardColumn.name} but was not`
+    );
+  }
 });
+
+Then(
+  'the card {string} in column {string} should exist',
+  async function (cardName, columnName) {
+    const isCardExist = await projectPage.isCardExist(columnName, cardName);
+    assert.strictEqual(
+      isCardExist,
+      true,
+      `Expected to card to be "${cardName}" but is not`
+    );
+  }
+);
+
+Then(
+  'the following cards should exist in board columns',
+  async function (dataTable) {
+    const columnCards = dataTable.hashes();
+    for (const columnCard of columnCards) {
+      const isCardExist = await projectPage.isCardExist(
+        columnCard.columnName,
+        columnCard.cardName
+      );
+      assert.strictEqual(
+        isCardExist,
+        true,
+        `Expected to card to be "${columnCard.cardName}" in "${columnCard.columnName}" but is not`
+      );
+    }
+  }
+);

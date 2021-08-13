@@ -1,4 +1,5 @@
 const { format } = require('util');
+const { client } = require('nightwatch-api');
 
 module.exports = {
   url: function () {
@@ -6,30 +7,45 @@ module.exports = {
   },
   commands: [
     {
-      addBoardList: function (boardColumnName, columnNumber) {
-        if (columnNumber == 1) {
+      addBoardColumn: function (boardColumnName, isFisrtColumn) {
+        if (isFisrtColumn) {
           return this.waitForElementVisible('@addListIcon')
             .click('@addListIcon')
-            .setValue('@boardListNameInput', boardColumnName)
+            .setValue('@boardColumnNameInput', boardColumnName)
             .waitForElementVisible('@addListBtn')
             .click('@addListBtn');
         } else {
-          return this.setValue('@boardListNameInput', boardColumnName)
+          return this.setValue('@boardColumnNameInput', boardColumnName)
             .waitForElementVisible('@addListBtn')
             .click('@addListBtn');
         }
       },
-      addCard: function (cardName, boardListName) {
-        const checkBoardName = {
-          selector: this.getCardEl(boardListName),
+      addCard: function (cardName, cardNumber, boardColumnName) {
+        const cardInputField = {
+          selector: this.getCardInputEl(boardColumnName),
           locateStrategy: 'xpath',
         };
-        return this.waitForElementVisible(checkBoardName)
-          .click(checkBoardName)
-          .waitForElementVisible('@cardInputField')
-          .setValue('@cardInputField', cardName)
-          .waitForElementVisible('@addCardConfirmBtn')
-          .click('@addCardConfirmBtn');
+        const addCardConfirmBtn = {
+          selector: this.getaddCardConfirmEl(boardColumnName),
+          locateStrategy: 'xpath',
+        };
+        if (cardNumber == 1) {
+          const checkBoardName = {
+            selector: this.getCardEl(boardColumnName),
+            locateStrategy: 'xpath',
+          };
+          return this.waitForElementVisible(checkBoardName)
+            .click(checkBoardName)
+            .waitForElementVisible(cardInputField)
+            .setValue(cardInputField, cardName)
+            .waitForElementVisible(addCardConfirmBtn)
+            .click(addCardConfirmBtn);
+        } else {
+          return this.waitForElementVisible(cardInputField)
+            .setValue(cardInputField, cardName)
+            .waitForElementVisible(addCardConfirmBtn)
+            .click(addCardConfirmBtn);
+        }
       },
       deleteProject: function (projectName) {
         return this.openProjectActions(projectName)
@@ -97,10 +113,10 @@ module.exports = {
         });
         return result;
       },
-      isBoardListExist: async function (boardListName) {
+      isBoardColumnExist: async function (boardColumnName) {
         let result = false;
         const boardListEl = {
-          selector: this.getBoardListEl(boardListName),
+          selector: this.getBoardColumnEl(boardColumnName),
           locateStrategy: 'xpath',
         };
         await this.isVisible(boardListEl, (res) => {
@@ -108,10 +124,10 @@ module.exports = {
         });
         return result;
       },
-      isCardExist: async function (cardName) {
+      isCardExist: async function (columnName, cardName) {
         let result = false;
         const cardTabEl = {
-          selector: this.getCardTabEl(cardName),
+          selector: this.getCardTabEl(columnName, cardName),
           locateStrategy: 'xpath',
         };
         await this.isVisible(cardTabEl, (res) => {
@@ -119,11 +135,32 @@ module.exports = {
         });
         return result;
       },
-      getCardTabEl: function (cardName) {
-        return format(this.elements.cardTab.selector, cardName);
+      getBoardColumns: async function () {
+        const boardColumns = [];
+        await this.api.elements('@boardColumn', async function ({ value }) {
+          value.forEach(function (element) {
+            const elementId = Object.values(element)[0];
+            client.elementIdText(elementId, function ({ value }) {
+              boardColumns.push(value);
+            });
+          });
+        });
+        return boardColumns;
       },
-      getCardEl: function (boardListName) {
-        return format(this.elements.addCardBtn.selector, boardListName);
+      getaddCardConfirmEl: function (boardColumnName) {
+        return format(
+          this.elements.addCardConfirmBtn.selector,
+          boardColumnName
+        );
+      },
+      getCardInputEl: function (boardColumnName) {
+        return format(this.elements.cardInputField.selector, boardColumnName);
+      },
+      getCardTabEl: function (columnName, cardName) {
+        return format(this.elements.cardTab.selector, columnName, cardName);
+      },
+      getCardEl: function (boardColumnName) {
+        return format(this.elements.addCardBtn.selector, boardColumnName);
       },
       getProjectBoardEl: function (boardName) {
         return format(this.elements.projectBoardTab.selector, boardName);
@@ -131,8 +168,8 @@ module.exports = {
       getProjectTitle: function (projectName) {
         return format(this.elements.projectHeader.selector, projectName);
       },
-      getBoardListEl: function (boardListName) {
-        return format(this.elements.addBoardList.selector, boardListName);
+      getBoardColumnEl: function (boardColumnName) {
+        return format(this.elements.addBoardColumn.selector, boardColumnName);
       },
     },
   ],
@@ -146,11 +183,15 @@ module.exports = {
     },
     addListBtn: {
       selector:
-        '//button[contains(@class,"ListAdd_submitButton")and text()="Add list"]',
+        '//button[contains(@class,"ListAdd_submitButton") and text()="Add list"]',
       locateStrategy: 'xpath',
     },
-    addBoardList: {
-      selector: '//div[contains(@class,"List_headerName")and text()="%s"]',
+    boardColumn: {
+      selector: '//div[contains(@class,"List_headerName")]',
+      locateStrategy: 'xpath',
+    },
+    boardColumnName: {
+      selector: '//div[contains(@class,"List_headerName") and text()="%s"]',
       locateStrategy: 'xpath',
     },
     addCardBtn: {
@@ -158,19 +199,24 @@ module.exports = {
         '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]/../../button',
       locateStrategy: 'xpath',
     },
+    addBoardList: {
+      selector: '//div[contains(@class,"List_headerName")and text()="%s"]',
 
     addCardConfirmBtn: {
-      selector: '//button[contains(@class, "CardAdd_submitButton")]',
+      selector:
+        '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]//ancestor::div[@class="List_outerWrapper__pTVo5"]//button[contains(@class, "CardAdd_submitButton")and text()="Add card"]',
       locateStrategy: 'xpath',
     },
-    boardListNameInput: {
+    boardColumnNameInput: {
       selector: 'div[class*=ListAdd_field] input',
     },
     cardInputField: {
-      selector: 'div[class*=CardAdd_field] textarea',
+      selector:
+        '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]//ancestor::div[@class="List_outerWrapper__pTVo5"]//textarea[@class="CardAdd_field__bZkCx"]',
     },
     cardTab: {
-      selector: '//div[contains(@class,"Card_name")and text()="%s"]',
+      selector:
+        '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]//ancestor::div[@class="List_outerWrapper__pTVo5"]//div[contains(@class,"Card_name")and text()="%s"]',
       locateStrategy: 'xpath',
     },
     confirmDeleteBtn: {

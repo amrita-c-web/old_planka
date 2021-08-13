@@ -67,12 +67,60 @@ Feature: project
             | column1 |
             | column2 |
     
-    Scenario: add card in a board list
+    Scenario: add card in a board column
         Given user "user10" has created the following projects:
             | name     |
             | project1 |
         And the user has opened project "project1"
         And the user has created a project board "board1" using the webUI
         And the user has added a board column "column1" using the webUI
-        When the user add a card "card1" in a column "column1" using the webUI
-        Then the card "card1" should exist 
+        When the user adds a card "card1" in a column "column1" using the webUI
+        Then the card "card1" in column "column1" should exist 
+
+    Scenario: add cards in a board columns
+        Given user "user10" has created the following projects:
+            | name     |
+            | project1 |
+        And the user has opened project "project1"
+        And the user has created a project board "board1" using the webUI
+        And the user has added the following columns:
+            | name    |
+            | column1 |
+            | column2 |
+        When the user add the following cards in column "column1":
+            | name         |
+            | column1Card1 |
+            | column1Card2 |
+        And the user add the following cards in column "column2":
+            | name         |
+            | column2Card1 |
+            | column2Card2 |
+        Then the following cards should exist in board columns:
+        | columnName | cardName     |
+        | column1    | column1Card1 |
+        | column1    | column1Card2 |
+        | column2    | column2Card1 |
+        | column2    | column2Card2 |
+
+    Scenario: drag and drop cards in a board columns
+        Given user "user10" has created the following projects:
+            | name     |
+            | project1 |
+        And the user has opened project "project1"
+        And the user has created a project board "board1" using the webUI
+        And the user has added the following columns:
+            | name    |
+            | column1 |
+            | column2 | 
+        And the user has added the following cards in column "column1":
+            | name         |
+            | column1Card1 |
+            | column1Card2 |
+        And the user has added the following cards in column "column2":
+            | name         |
+            | column2Card1 |
+            | column2Card2 |
+        When the user drags the card "column1Card1" from column "column1" to "column2" using the webUI
+        Then the card "column1Card1" should exist in column "column2"
+
+        
