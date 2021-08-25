@@ -8,7 +8,7 @@ module.exports = {
   commands: [
     {
       addBoardColumn: function (boardColumnName, isFisrtColumn) {
-        if (isFisrtColumn) {
+        if (isFisrtColumn == 1) {
           return this.waitForElementVisible('@addListIcon')
             .click('@addListIcon')
             .setValue('@boardColumnNameInput', boardColumnName)
@@ -20,22 +20,22 @@ module.exports = {
             .click('@addListBtn');
         }
       },
-      addCard: function (cardName, cardNumber, boardColumnName) {
+      addCard: function (cardName, isFirstCard, boardColumnName) {
         const cardInputField = {
           selector: this.getCardInputEl(boardColumnName),
           locateStrategy: 'xpath',
         };
         const addCardConfirmBtn = {
-          selector: this.getaddCardConfirmEl(boardColumnName),
+          selector: this.getAddCardConfirmEl(boardColumnName),
           locateStrategy: 'xpath',
         };
-        if (cardNumber == 1) {
-          const checkBoardName = {
-            selector: this.getCardEl(boardColumnName),
+        if (isFirstCard == 1) {
+          const addCardBtn = {
+            selector: this.getAddCardBtnEl(boardColumnName),
             locateStrategy: 'xpath',
           };
-          return this.waitForElementVisible(checkBoardName)
-            .click(checkBoardName)
+          return this.waitForElementVisible(addCardBtn)
+            .click(addCardBtn)
             .waitForElementVisible(cardInputField)
             .setValue(cardInputField, cardName)
             .waitForElementVisible(addCardConfirmBtn)
@@ -47,12 +47,19 @@ module.exports = {
             .click(addCardConfirmBtn);
         }
       },
+      openCardMenu: function (cardName, columnName) {
+        const cardEL = {
+          selector: this.getColumnCardEl(columnName, cardName),
+          locateStrategy: 'xpath',
+        };
+        return this.waitForElementVisible(cardEl).click(cardEl);
+      },
       deleteProject: function (projectName) {
         return this.openProjectActions(projectName)
           .waitForElementVisible('@deleteProject')
           .click('@deleteProject')
-          .waitForElementVisible('@confirmDeleteBtn')
-          .click('@confirmDeleteBtn');
+          .waitForElementVisible('@confirmDeleteProjectBtn')
+          .click('@confirmDeleteProjectBtn');
       },
       renameProject: function (oldProjectName, newProjectName) {
         return this.openProjectActions(oldProjectName)
@@ -83,6 +90,29 @@ module.exports = {
           locateStrategy: 'xpath',
         };
         return this.waitForElementVisible(projectTitleEl).click(projectTitleEl);
+      },
+      dragAndDrop: async function (cardName, fromColumn, getDroppableEl) {
+        const dragFrom = {
+          selector: this.getColumnCardEl(fromColumn, cardName),
+          locateStrategy: 'xpath',
+        };
+        const dropTo = {
+          selector: this.getDroppableEl(getDroppableEl),
+          locateStrategy: 'xpath',
+        };
+        let dropToOffset = {};
+        await client.getLocation(dropTo, function ({ value }) {
+          dropToOffset.x = value.x;
+        });
+        await client.findElement(dragFrom, function (res) {
+          client.moveTo(res.value.getId(), 0, 0).mouseButtonDown(0);
+        });
+        await client.findElement(dropTo, function (res) {
+          client
+            .moveTo(res.value.getId(), 0, 0)
+            .moveTo(res.value.getId(), dropToOffset.x, 0)
+            .mouseButtonUp(0);
+        });
       },
       isBackgroundPurple: async function () {
         let result = false;
@@ -126,11 +156,11 @@ module.exports = {
       },
       isCardExist: async function (columnName, cardName) {
         let result = false;
-        const cardTabEl = {
-          selector: this.getCardTabEl(columnName, cardName),
+        const cardEL = {
+          selector: this.getColumnCardEl(columnName, cardName),
           locateStrategy: 'xpath',
         };
-        await this.isVisible(cardTabEl, (res) => {
+        await this.isVisible(cardEL, (res) => {
           result = res.value;
         });
         return result;
@@ -147,19 +177,22 @@ module.exports = {
         });
         return boardColumns;
       },
-      getaddCardConfirmEl: function (boardColumnName) {
+      getAddCardConfirmEl: function (boardColumnName) {
         return format(
           this.elements.addCardConfirmBtn.selector,
           boardColumnName
         );
       },
+      getDroppableEl: function (columnName) {
+        return format(this.elements.droppableArea.selector, columnName);
+      },
       getCardInputEl: function (boardColumnName) {
         return format(this.elements.cardInputField.selector, boardColumnName);
       },
-      getCardTabEl: function (columnName, cardName) {
-        return format(this.elements.cardTab.selector, columnName, cardName);
+      getColumnCardEl: function (columnName, cardName) {
+        return format(this.elements.columnCard.selector, columnName, cardName);
       },
-      getCardEl: function (boardColumnName) {
+      getAddCardBtnEl: function (boardColumnName) {
         return format(this.elements.addCardBtn.selector, boardColumnName);
       },
       getProjectBoardEl: function (boardName) {
@@ -169,7 +202,7 @@ module.exports = {
         return format(this.elements.projectHeader.selector, projectName);
       },
       getBoardColumnEl: function (boardColumnName) {
-        return format(this.elements.addBoardColumn.selector, boardColumnName);
+        return format(this.elements.boardColumnName.selector, boardColumnName);
       },
     },
   ],
@@ -192,20 +225,22 @@ module.exports = {
     },
     boardColumnName: {
       selector: '//div[contains(@class,"List_headerName") and text()="%s"]',
-      locateStrategy: 'xpath',
     },
     addCardBtn: {
       selector:
         '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]/../../button',
       locateStrategy: 'xpath',
     },
+    confirmDeleteCardBtn: {
+      selector: '//button[contains(@class,"button") and text()="Delete card"]',
+      locateStrategy: 'xpath',
+    },
     addBoardList: {
       selector: '//div[contains(@class,"List_headerName")and text()="%s"]',
-
+    },
     addCardConfirmBtn: {
       selector:
         '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]//ancestor::div[@class="List_outerWrapper__pTVo5"]//button[contains(@class, "CardAdd_submitButton")and text()="Add card"]',
-      locateStrategy: 'xpath',
     },
     boardColumnNameInput: {
       selector: 'div[class*=ListAdd_field] input',
@@ -214,12 +249,16 @@ module.exports = {
       selector:
         '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]//ancestor::div[@class="List_outerWrapper__pTVo5"]//textarea[@class="CardAdd_field__bZkCx"]',
     },
-    cardTab: {
+    droppableArea: {
       selector:
-        '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]//ancestor::div[@class="List_outerWrapper__pTVo5"]//div[contains(@class,"Card_name")and text()="%s"]',
+        '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]//ancestor::div[contains(@class, "List_outerWrapper")]',
+    },
+    columnCard: {
+      selector:
+        '//div[@class="List_innerWrapper__Hck6J"]//div//div[text()="%s"]//ancestor::div[@class="List_outerWrapper__pTVo5"]//div[contains(@class,"Card_card") and .="%s"]',
       locateStrategy: 'xpath',
     },
-    confirmDeleteBtn: {
+    confirmDeleteProjectBtn: {
       selector: '//button[text()="Delete project"]',
       locateStrategy: 'xpath',
     },
@@ -243,7 +282,6 @@ module.exports = {
     },
     projectHeader: {
       selector: '//a[contains(@class,"Header_item") and text()="%s"]',
-      locateStrategy: 'xpath',
     },
     projectTitleInput: {
       selector: 'div[class*=InformationEdit_field] input',
@@ -259,7 +297,6 @@ module.exports = {
     },
     projectBoardTab: {
       selector: '//a[contains(@class, "Boards_link") and text()="%s"]',
-      locateStrategy: 'xpath',
     },
     saveTitleBtn: {
       selector: '//button[text()="Save"]',

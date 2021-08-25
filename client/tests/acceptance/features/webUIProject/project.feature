@@ -40,87 +40,81 @@ Feature: project
             | name     |
             | project1 |
         And the user has opened project "project1"
-        When the user creates a new project board "board1" using the webUI
-        Then the project board "board1" should exist
+        When the user creates a new project board "Acceptance test" using the webUI
+        Then the project board "Acceptance test" should exist
 
     Scenario: create a board column
         Given user "user10" has created the following projects:
             | name     |
             | project1 |
         And the user has opened project "project1"
-        And the user has created a project board "board1" using the webUI
-        When the user add a board column "column1" using the webUI
-        Then the board column "column1" should exist
+        And the user has created a project board "Acceptance test" using the webUI
+        When the user add a board column "Todo" using the webUI
+        Then the board column "Todo" should exist
     
     Scenario: create board columns
         Given user "user10" has created the following projects:
             | name     |
             | project1 |
         And the user has opened project "project1"
-        And the user has created a project board "board1" using the webUI
+        And the user has created a project board "Acceptance test" using the webUI
         When the user add the following columns:
-            | name    |
-            | column1 |
-            | column2 |
+            | name        |
+            | Todo        |
+            | In-progress |
         Then the following board columns shold exist:
-            | name    |
-            | column1 |
-            | column2 |
+            | name        |
+            | Todo        |
+            | In-progress |
     
     Scenario: add card in a board column
         Given user "user10" has created the following projects:
             | name     |
             | project1 |
         And the user has opened project "project1"
-        And the user has created a project board "board1" using the webUI
-        And the user has added a board column "column1" using the webUI
-        When the user adds a card "card1" in a column "column1" using the webUI
-        Then the card "card1" in column "column1" should exist 
+        And the user has created a project board "Acceptance test" using the webUI
+        And the user has added a board column "Todo" using the webUI
+        When the user adds a card "card1" in a column "Todo" using the webUI
+        Then the card "card1" should exist in column "Todo"
 
     Scenario: add cards in a board columns
         Given user "user10" has created the following projects:
             | name     |
             | project1 |
         And the user has opened project "project1"
-        And the user has created a project board "board1" using the webUI
+        And the user has created a project board "Acceptance test" using the webUI
         And the user has added the following columns:
-            | name    |
-            | column1 |
-            | column2 |
-        When the user add the following cards in column "column1":
-            | name         |
-            | column1Card1 |
-            | column1Card2 |
-        And the user add the following cards in column "column2":
-            | name         |
-            | column2Card1 |
-            | column2Card2 |
+            | name        |
+            | Todo        |
+            | In-progress |
+        When the user adds the following cards in column "Todo":
+            | name          |
+            | Share testing |
+            | Implement CI  |
+        And the user adds the following cards in column "In-progress":
+            | name               |
+            | Basic UI test      |
+            | Refactor test code |
         Then the following cards should exist in board columns:
-        | columnName | cardName     |
-        | column1    | column1Card1 |
-        | column1    | column1Card2 |
-        | column2    | column2Card1 |
-        | column2    | column2Card2 |
+        | columnName  | cardName           |
+        | Todo        | Share testing      |
+        | Todo        | Implement CI       |
+        | In-progress | Basic UI test      |
+        | In-progress | Refactor test code |
 
     Scenario: drag and drop cards in a board columns
         Given user "user10" has created the following projects:
             | name     |
             | project1 |
         And the user has opened project "project1"
-        And the user has created a project board "board1" using the webUI
+        And the user has created a project board "Acceptance test" using the webUI
         And the user has added the following columns:
-            | name    |
-            | column1 |
-            | column2 | 
-        And the user has added the following cards in column "column1":
-            | name         |
-            | column1Card1 |
-            | column1Card2 |
-        And the user has added the following cards in column "column2":
-            | name         |
-            | column2Card1 |
-            | column2Card2 |
-        When the user drags the card "column1Card1" from column "column1" to "column2" using the webUI
-        Then the card "column1Card1" should exist in column "column2"
-
-        
+            | name        |
+            | Todo        |
+            | In-progress |
+        And the user has added the following cards in column "Todo":
+            | name          |
+            | Share testing |
+            | Implement CI  |
+        When the user drags the card "Share testing" from column "Todo" to "In-progress" using the webUI
+        Then the card "Share testing" should exist in column "In-progress"
