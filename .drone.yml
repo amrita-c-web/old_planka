@@ -28,13 +28,19 @@ services:
   - name: postgres
     image: postgres
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - name: data-path
+        path: /var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=planka
-      - POSTGRES_HOST_AUTH_METHOD=trust
+      POSTGRES_DB: planka
+      POSTGRES_HOST_AUTH_METHOD: trust
 
   - name: selenium
     image: selenium/standalone-chrome-debug
+
+volumes:
+  - name: data-path
+    host:
+      path: /var/lib/postgresql/data
 
 trigger:
   branch:
