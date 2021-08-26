@@ -9,6 +9,7 @@ env:
   global:
     - POSTGRES_DB=planka
     - POSTGRES_HOST_AUTH_METHOD=trust
+    - DRONE=false
 
 before_install:
   - psql -c 'CREATE DATABASE planka;' -U postgres

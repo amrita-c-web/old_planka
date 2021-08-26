@@ -29,7 +29,7 @@ module.exports.security = {
 
   cors: {
     allRoutes: true,
-    allowOrigins: ['http://localhost:3000'],
+    allowOrigins: ['http://localhost:3000', 'http://planka-client:3000'],
     allowRequestHeaders: ['Authorization'],
     allowCredentials: false,
   },

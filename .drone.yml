@@ -1,0 +1,60 @@
+kind: pipeline
+type: docker
+name: webUITest
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: planka-client
+    image: node:14-alpine3.14
+    detach: true
+    environment:
+      REACT_APP_SERVER_BASE_URL: http://planka-server:1337
+    commands:
+      - cd client
+      - npm i
+      - npm start
+
+  - name: planka-server
+    image: node:14-alpine3.14
+    detach: true
+    environment:
+      DATABASE_URL: postgresql://postgres@postgres/planka
+    commands:
+      - cd server
+      - npm i
+      - npm run db:init
+      - npm start
+
+  - name: wait-for-server
+    image: 'curlimages/curl'
+    commands:
+      - until curl -s http://planka-client:3000/login; do sleep 5; done
+      - until curl -s http://planka-server:1337; do sleep 5; done
+
+  - name: ui-tests
+    image: node:14-alpine3.14
+    environment:
+      DRONE: true
+      LAUNCH_URL: 'http://planka-client:3000'
+      API_SERVER_URL: 'http://planka-server:1337/api'
+    commands:
+      - cd client
+      - npm i
+      - npm run test:webui tests/acceptance/features
+
+services:
+  - name: postgres
+    image: postgres:alpine
+    environment:
+      POSTGRES_DB: planka
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+  - name: selenium
+    image: selenium/standalone-chrome-debug
+
+trigger:
+  branch:
+    - master
