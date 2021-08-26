@@ -1,0 +1,32 @@
+language: node_js
+
+services:
+  - postgresql
+  - docker
+  - xvfb
+
+env:
+  global:
+    - POSTGRES_DB=planka
+    - POSTGRES_HOST_AUTH_METHOD=trust
+
+before_install:
+  - psql -c 'CREATE DATABASE planka;' -U postgres
+  - docker run -d -p 4444:4444 -p 5900:5900 --net="host" -v /dev/shm:/dev/shm selenium/standalone-chrome-debug
+  - nvm install v12
+  - nvm use v12
+
+install:
+  - npm ci
+
+before_script:
+  - npm run server:db:init
+  - npm start
+
+script:
+  - cd client
+  - npm run test:webui tests/acceptance/features
+
+branches:
+  only:
+    - master
